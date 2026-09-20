@@ -1,0 +1,24 @@
+# Artefatos de build do arduino-cli / Arduino IDE
+build/
+*.bin
+*.elf
+*.map
+*.hex
+*.d
+*.o
+*.a
+
+# Cache do Arduino IDE
+.vscode/
+.theia/
+
+# Sistema operacional
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Ambiente Python da ponte USB
+__pycache__/
+*.pyc
+.venv/
+venv/

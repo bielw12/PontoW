@@ -1,0 +1,80 @@
+Versao ANTERIOR da funcao payEscolha() do ChargeGridCYD.ino
+===========================================================
+
+Esta e a tela de escolha de metodo de pagamento como estava ANTES da
+alteracao que a transformou numa lista de largura cheia.
+
+  ANTES (este arquivo) : grade 2x2, botoes de 148 x 48 px
+  DEPOIS (em uso hoje) : coluna unica, botoes de 300 x 36 px
+
+Nenhuma outra parte do firmware mudou entre as duas versoes - so esta
+funcao. Ela e autocontida: usa apenas primitivas que continuam
+existindo (drvHeader, bRound, bFrame, bFill, bTxt, fitTxt, addHit).
+
+COMO VOLTAR PARA ESTA VERSAO
+----------------------------
+Abra ChargeGridCYD/ChargeGridCYD.ino, localize a funcao payEscolha()
+(por volta da linha 922, logo acima do comentario "/* 2b. PIX */") e
+substitua o corpo inteiro dela pelo codigo abaixo. Depois recompile.
+
+O QUE PESAR ANTES DE TROCAR
+---------------------------
+A grade 2x2 e a unica tela do firmware com alvos lado a lado. Num
+painel resistivo isso muda o tipo de erro: em vez de um toque impreciso
+simplesmente nao acertar nada, ele pode selecionar o metodo vizinho -
+o usuario escolhe PIX e cai no Google Pay. Na coluna unica, os alvos
+ocupam a largura toda, entao so existe erro na vertical.
+
+Se o motivo da volta for estetico, vale considerar um meio-termo:
+manter a coluna unica e so aumentar a altura das linhas.
+
+=========================== CODIGO ===========================
+
+/* 2a. escolha do metodo */
+static void payEscolha() {
+  drvHeader("PAGAMENTO", "C01 - CCS2", true, HIT_PAY_BACK);
+
+  /* total */
+  bRound(PAD, 28, CW, 46, 8, C_PANEL);
+  bTxt("TOTAL A PAGAR", PAD + 12, 34, C_DIM2);
+  bTxt("R$", PAD + 12, 58, C_DIM);
+  String tot = nf(sesTotal(), 2);
+  bTxt(tot.c_str(), PAD + 32, 44, C_TEXT, FB18);
+
+  char l1[48], l2[40], l3[40];
+  snprintf(l1, sizeof(l1), "%s kWh x R$ %s", nf(S.sEntregue).c_str(), nf(PRECO_KWH, 2).c_str());
+  snprintf(l2, sizeof(l2), "+ taxa de rede R$ %s", nf(TAXA_REDE, 2).c_str());
+  snprintf(l3, sizeof(l3), "34 min - VLO-2608-1418");
+  bTxt(l1, RGT - 12, 36, C_DIM,  FS1, TR_DATUM);
+  bTxt(l2, RGT - 12, 48, C_DIM2, FS1, TR_DATUM);
+  bTxt(l3, RGT - 12, 60, C_DIM2, FS1, TR_DATUM);
+
+  bTxt("ESCOLHA O METODO", PAD, 82, C_DIM2);
+
+  /* 4 botoes grandes 2x2 */
+  for (int i = 0; i < 4; i++) {
+    int bx = PAD + (i % 2) * 152, by = 94 + (i / 2) * 54;
+    addHit(HIT_PAY_MET + i, bx, by, 148, 48);
+    bRound(bx, by, 148, 48, 8, C_PANEL);
+    bFrame(bx, by, 148, 48, 8, C_LINE);
+    bFill(bx + 8, by + 8, 3, 32, PG_COLOR[i]);
+    bTxt(PG_FULL[i], bx + 18, by + 10, C_TEXT, FB9);
+    bTxt(fitTxt(PG_SUB[i], FS1, 118).c_str(), bx + 18, by + 30, C_DIM2);
+  }
+  bTxt("Conector travado ate a quitacao", SCR_W / 2, 208, C_DIM2, FS1, TC_DATUM);
+}
+
+======================== FIM DO CODIGO ========================
+
+MAPA DAS DUAS GEOMETRIAS
+------------------------
+grade 2x2                       coluna unica
+  PIX        | Google Pay         PIX             >
+  (8,94)     | (160,94)           (8,80)  300x36
+  148x48     | 148x48             Google Pay      >
+                                  (8,120) 300x36
+  Apple Pay  | PayPal             Apple Pay       >
+  (8,148)    | (160,148)          (8,160) 300x36
+  148x48     | 148x48             PayPal          >
+                                  (8,200) 300x36
+  area do alvo: 7.104 px2         area do alvo: 10.800 px2
